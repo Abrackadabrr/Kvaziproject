@@ -1,0 +1,2 @@
+# Kvaziproject
+Psevdaproject
