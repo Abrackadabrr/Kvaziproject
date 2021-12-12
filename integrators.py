@@ -41,3 +41,5 @@ def integrator_method(next_step, func, initial_state, initial_time, timestep, n_
     return np.array(result)
 
 
+if __name__ == '__main__':
+    print('Make sure you do all right')
