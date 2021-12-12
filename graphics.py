@@ -1,7 +1,5 @@
 import pygame
-import os
 import numpy as np
-from abc import abstractmethod
 
 FPS = 150
 
@@ -11,19 +9,21 @@ WHITE = (255, 255, 255)
 GREY = (100, 100, 100)
 RED = (255, 0, 0)
 
+FIELD_WIDTH = 100
+FIELD_HEIGHT = 35
+
+col_x = 1000
+way = pygame.Surface((1200, 800), pygame.SRCALPHA, 32)
+sc = pygame.display.set_mode((1200, 800))
+way = way.convert_alpha()
+
+START_POS = (600, 400)
+
 
 class Window:
     """
     abstract class for all program's windows
     """
-
-    # @abstractmethod
-    # def run(self):
-    #     """
-    #     abstract method, uses for runtime functions
-    #     :return: smth useful
-    #     """
-    #     pass
 
     @staticmethod
     def create_text(text, color, position, size, screen, background=BLACK):
@@ -47,15 +47,49 @@ class Menu(Window):
         init function
         :param screen: surface
         """
-        self.buttons = []
         self.screen = screen
+
+        self.start_button = Button(970, 700, 200, 70, "Start!", self.screen)
+
         self.text1 = Text("NPendulumN", YELLOW, (430, 12), 80, self.screen)
-        self.texts = [self.text1]
+        self.text2 = Text("N: ", WHITE, (col_x - 50, 100), 50, self.screen)
+        self.text3 = Text("l: ", WHITE, (col_x - 50, 150), 50, self.screen)
+        self.texts = [self.text1, self.text2, self.text3]
+
+        self.field_N = InsertField(5, col_x, 100, FIELD_WIDTH, FIELD_HEIGHT, self.screen)
+        self.field_l = InsertField(60, col_x, 150, FIELD_WIDTH, FIELD_HEIGHT, self.screen)
+        self.field_angle1 = InsertField(30, col_x, 200, FIELD_WIDTH, FIELD_HEIGHT, self.screen)
+        self.field_angle2 = InsertField(0, col_x, 250, FIELD_WIDTH, FIELD_HEIGHT, self.screen)
+        self.field_angle3 = InsertField(30, col_x, 300, FIELD_WIDTH, FIELD_HEIGHT, self.screen)
+        self.field_angle4 = InsertField(0, col_x, 350, FIELD_WIDTH, FIELD_HEIGHT, self.screen)
+        self.field_angle5 = InsertField(30, col_x, 400, FIELD_WIDTH, FIELD_HEIGHT, self.screen)
+        self.field_angle6 = InsertField(0, col_x, 450, FIELD_WIDTH, FIELD_HEIGHT, self.screen)
+        self.field_angle7 = InsertField(30, col_x, 500, FIELD_WIDTH, FIELD_HEIGHT, self.screen)
+        self.field_angle8 = InsertField(0, col_x, 550, FIELD_WIDTH, FIELD_HEIGHT, self.screen)
+        self.field_angle9 = InsertField(30, col_x, 600, FIELD_WIDTH, FIELD_HEIGHT, self.screen)
+        self.field_angle10 = InsertField(30, col_x, 650, FIELD_WIDTH, FIELD_HEIGHT, self.screen)
+        self.insert_fields = [self.field_N, self.field_l, self.field_angle1, self.field_angle2, self.field_angle3,
+                              self.field_angle4, self.field_angle5, self.field_angle6,
+                              self.field_angle7, self.field_angle8, self.field_angle9,
+                              self.field_angle10]
+        self.angles = [np.pi / 180 * button.get_value() for button in self.insert_fields[2:]]
 
     def draw_objects(self):
         """Draws all objects in the window"""
         for text in self.texts:
             text.draw()
+
+        for f in self.insert_fields[:(int(self.field_N.get_value()) + 2)]:
+            f.draw()
+
+        self.angles = [np.pi / 180 * button.get_value() for button in self.insert_fields[2:]]
+        pos_s = Animation.data_transform(self.angles, self.field_l.get_value())
+        for i in range(min(int(self.field_N.get_value()), 10)):
+            pygame.draw.line(self.screen, YELLOW, pos_s[i], pos_s[i + 1], 5)
+            pygame.draw.circle(self.screen, YELLOW, pos_s[i + 1], 5)
+        pygame.draw.circle(self.screen, YELLOW, pos_s[0], 5)
+        self.start_button.draw()
+        sc.blit(self.screen, (0, 0))
 
     def run(self):
         """
@@ -75,9 +109,35 @@ class Menu(Window):
                 if event.type == pygame.QUIT:
                     finished = True
 
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    for f in self.insert_fields:
+                        if f.check_mouse():
+                            f.activate()
+                        else:
+                            f.deactivate()
+
+                    if self.start_button.check_mouse():
+                        finished = True
+
+                if event.type == pygame.KEYDOWN:
+                    for f in self.insert_fields:
+                        if event.key == 13:
+                            f.deactivate()
+                        if event.key == pygame.K_BACKSPACE:
+                            if f.is_active and f.value != "":
+                                f.value = f.value[:-2]
+                                f.value += "|"
+                                f.text.set_text(f.value)
+                        else:
+                            if len(f.value) < 5:
+                                f.insert(event.unicode)
+
             self.draw_objects()
             pygame.display.update()
             self.screen.fill(BLACK)
+
+        n = int(self.field_N.get_value())
+        return n, self.field_l.get_value(), np.array(self.angles[:n])
 
 
 class Text:
@@ -104,15 +164,34 @@ class Text:
         self.screen = screen
         self.background = background
         self.is_active = True
-        self.f1 = pygame.font.Font(None, self.size)
-        self.text1 = self.f1.render(self.text, True, self.current_color, self.background)
 
     def draw(self):
         """
         draw text on screen
         :return:
         """
-        self.screen.blit(self.text1, (self.x, self.y))
+        f1 = pygame.font.Font(None, self.size)
+        text1 = f1.render(self.text, True,
+                          self.current_color, self.background)
+        self.screen.blit(text1, (self.x, self.y))
+
+    def activate(self):
+        """
+        change active fields color
+        :return:
+        """
+        if not self.is_active:
+            self.is_active = True
+            self.current_color = self.base_color
+
+    def deactivate(self):
+        """
+        chnge deactive fields in grey color
+        :return:
+        """
+        if self.is_active:
+            self.is_active = False
+            self.current_color = (100, 100, 100)
 
     def set_text(self, text):
         """
@@ -198,6 +277,15 @@ class InsertField:
         else:
             return False
 
+    def get_value(self):
+        try:
+            if self.is_active:
+                return float(self.value[:-1])
+            else:
+                return float(self.value)
+        except ValueError:
+            return 0
+
 
 class Button:
     """
@@ -275,10 +363,9 @@ class Animation(Window):
 
             self.draw_objects(angles[self.counter])
             pygame.display.update()
-            print(self.counter)
             if self.counter > angles.shape[0] - 10:
                 finished = True
-            self.counter += 2
+            self.counter += 1
             self.screen.fill(BLACK)
 
     def draw_objects(self, angles):
@@ -287,23 +374,15 @@ class Animation(Window):
             pygame.draw.line(self.screen, YELLOW, pos_s[i], pos_s[i+1], 5)
             pygame.draw.circle(self.screen, YELLOW, pos_s[i+1], 5)
 
-    def data_transform(self, angles):
-        length = 250
+        pygame.draw.circle(self.screen, YELLOW, pos_s[0], 5)
+        pygame.draw.circle(way, RED, pos_s[-1], 1)
+        sc.blit(self.screen, (0, 0))
+        sc.blit(way, (0, 0))
+
+    @staticmethod
+    def data_transform(angles, length=50):
         data_cos = np.cos(angles.copy())
         data_sin = np.sin(angles.copy())
         y_s = np.cumsum(length * data_cos)
         x_s = np.cumsum(length * data_sin)
-        return np.column_stack([np.insert(x_s, 0, 0) + 600, np.insert(y_s, 0, 0) + 200])
-
-
-class Kernel:
-
-    def __init__(self, x, y, angle, length=50):
-        self.x = x
-        self.y = y
-        self.angle = angle
-        self.length = length
-
-    def draw(self, x, y, angle, screen):
-        pygame.draw.aaline(screen, YELLOW, [self.x, self.y], [self.x + self.length * np.sin(self.angle),
-                                                              self.y + self.length * np.cos(self.angle)])
+        return np.column_stack([np.insert(x_s, 0, 0) + START_POS[0], np.insert(y_s, 0, 0) + START_POS[1]])
