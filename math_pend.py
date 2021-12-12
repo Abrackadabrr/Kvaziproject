@@ -47,7 +47,7 @@ class TwoStickPendulum:
         :return:
         """
         A = np.array([[1, (3/8)*np.cos(state[1] - state[0])],
-                      [1, (3/2)*np.cos(state[1] - state[0])]])
+                      [(3/2)*np.cos(state[1] - state[0]), 1]])
 
         b1 = (3/8)*state[3]*(state[3] - state[2])*np.sin(state[1] - state[0]) + (3/8)*state[3]*state[2]*np.sin(state[1] - state[0]) - (9/8)*np.sin(state[0])*self.omega # g/l
         b2 = (3/2)*state[2]*(state[3] - state[2])*np.sin(state[1] - state[0]) - (3/2)*state[3]*state[2]*np.sin(state[1] - state[0]) - (3/2)*np.sin(state[1])*self.omega  # g/l
