@@ -19,11 +19,11 @@ class MathPEndulum:
 
 class TwoStickPendulum:
     def __init__(self, omega):
-        # self.omega = omega
+        self.omega = omega
         pass
 
     def func(self, state, time):
-        psi = np.array([self.psi1(state, time), self.psi2(state, time)])
+        psi = self.psi(state, time)
         xi = state[2:4]
         return np.concatenate((xi, psi))
 
@@ -38,6 +38,23 @@ class TwoStickPendulum:
     def psi2(self, state, time):
         fi1_2 = 0
         return -(3/2) * (fi1_2*np.cos(state[1] - state[0]) - state[2]*(state[3] - state[2])*np.sin(state[1] - state[0])) - (3/2)*state[3]*state[2]*np.sin(state[1] - state[0]) - (3/2)*np.sin(state[1])*10  # g/l
+
+    def psi(self, state, time):
+        """
+        System solution
+        :param state:
+        :param time:
+        :return:
+        """
+        A = np.array([[1, (3/8)*np.cos(state[1] - state[0])],
+                      [1, (3/2)*np.cos(state[1] - state[0])]])
+
+        b1 = (3/8)*state[3]*(state[3] - state[2])*np.sin(state[1] - state[0]) + (3/8)*state[3]*state[2]*np.sin(state[1] - state[0]) - (9/8)*np.sin(state[0])*self.omega # g/l
+        b2 = (3/2)*state[2]*(state[3] - state[2])*np.sin(state[1] - state[0]) - (3/2)*state[3]*state[2]*np.sin(state[1] - state[0]) - (3/2)*np.sin(state[1])*self.omega  # g/l
+        b = np.array([b1, b2])
+        x = np.linalg.solve(A, b)
+        # print(A@x - b)
+        return x
 
 
 class NStickPendulum:
@@ -55,11 +72,11 @@ class NStickPendulum:
         return it.integrator_method(it.hune, self.func, in_state, 0, time_step, n_iters)
 
 
-a = TwoStickPendulum(30)
-fi = a.solve(np.array([1, 0, 0, 0]), 0.0001, 10)[:, 0:2]
+if __name__ == "__main__":
+    a = TwoStickPendulum(10)
+    fi = a.solve(np.array([1, 0, 0, 0]), 0.0001, 100)[:, 0:2]
 
-plt.plot(np.arange(0, 10+0.0001, 0.0001), fi[:,1])
-plt.plot(np.arange(0, 10+0.0001, 0.0001), fi[:,1])
-plt.plot(np.arange(0, 10+0.0001, 0.0001), fi[:,2])
-plt.grid(True)
-plt.show()
+    plt.plot(np.arange(0, 100+0.0001, 0.0001), fi[:,0])
+    plt.plot(np.arange(0, 10+0.0001, 0.0001), fi[:,1])
+    plt.grid(True)
+    plt.show()
