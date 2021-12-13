@@ -74,14 +74,14 @@ class NStickPendulum:
             return np.zeros(self.n + 1)
         ans = state[0:self.n]
         ders = state[self.n:2 * self.n]
-        return np.array([0] * self.n + [-(self.l * np.sin(ans[0:stop]) * ders[0:stop]).sum()])
+        return np.array([0] * self.n + [-(self.l * np.cos(ans[0:stop]) * ders[0:stop]).sum()])
 
     def sum2(self, state, stop):
         if stop <= 0:
             return np.array([0] * (self.n + 1))
         ans = state[0:self.n]
         ders = state[self.n:2 * self.n]
-        return np.array([0] * self.n + [(self.l * np.cos(ans[0:stop]) * ders[0:stop]).sum()])
+        return np.array([0] * self.n + [(self.l * np.sin(ans[0:stop]) * ders[0:stop]).sum()])
 
     def sqrt(self, state, stop):
         return np.sqrt(self.sum1(state, stop)[self.n] ** 2 + self.sum2(state, stop)[self.n] ** 2)
@@ -92,8 +92,8 @@ class NStickPendulum:
 
         ans = state[0:self.n]
         ders = state[self.n:2 * self.n]
-        second_part = np.array([0] * self.n + [((self.l * np.cos(ans[0:stop]) * ders[0:stop] * ders[0:stop]).sum())])
-        first_part = np.concatenate((self.l * np.sin(ans[0:stop]), np.array([0] * (self.n - stop + 1))))
+        second_part = np.array([0] * self.n + [-((self.l * np.sin(ans[0:stop]) * ders[0:stop] * ders[0:stop]).sum())])
+        first_part = np.concatenate((self.l * np.cos(ans[0:stop]), np.array([0] * (self.n - stop + 1))))
         return (-1)*(first_part + second_part)
 
     def derSum2(self, state, stop):
@@ -102,8 +102,8 @@ class NStickPendulum:
 
         ans = state[0:self.n]
         ders = state[self.n:2 * self.n]
-        second_part = np.array([0] * self.n + [(-1)*((self.l * np.sin(ans[0:stop]) * ders[0:stop] * ders[0:stop]).sum())])
-        first_part = np.concatenate((self.l * np.cos(ans[0:stop]), np.array([0] * (self.n - stop + 1))))
+        second_part = np.array([0] * self.n + [((self.l * np.cos(ans[0:stop]) * ders[0:stop] * ders[0:stop]).sum())])
+        first_part = np.concatenate((self.l * np.sin(ans[0:stop]), np.array([0] * (self.n - stop + 1))))
         return first_part + second_part
 
     def d_dt_dTj_dphik(self, state, j, k):
@@ -128,11 +128,12 @@ class NStickPendulum:
             assert j != 0
             if k < j:
                 # -------------------------------------------first line-------------------------------#
-                first_part = derSum1 * (-self.l * np.sin(ans[k])) + (-self.l * np.cos(ans[k]) * ders[k]) * sum1 + \
-                             derSum2 * (self.l * np.cos(ans[k])) + (-self.l * np.sin(ans[k]) * ders[k]) * sum2
+                first_part = derSum1 * (-self.l * np.cos(ans[k])) + (self.l * np.sin(ans[k]) * ders[k]) * sum1 + \
+                             derSum2 * (self.l * np.sin(ans[k])) + (self.l * np.cos(ans[k]) * ders[k]) * sum2
 
-                second_part = ((sum1[self.n]) * (-self.l * np.sin(ans[k])) + (sum2[self.n]) * (
-                            self.l * np.cos(ans[k]))) * (np.array(
+                second_part = ((sum1[self.n]) * (-self.l * np.cos(ans[k])) + (sum2[self.n]) * (
+                            self.l * np.sin(ans[k]))) * \
+                              (np.array(
                     [0] * j + [np.cos(ans[j] - ans[j - 1])] + [0] * (self.n - j)) + np.concatenate((np.zeros(self.n),
                                             np.array([ders[j] * (-np.sin(ans[j] -ans[j - 1]) * (ders[j] -ders[j - 1]))])))) / sqrt
 
@@ -141,12 +142,12 @@ class NStickPendulum:
                 # ----------------------------------------------------------------------------#
 
                 koef = (np.cos(ans[j] - ans[j - 1]) * ders[j]) / (sqrt**2)
-                fig_skobka = derSum1 * (-self.l * np.sin(ans[k])) + (-self.l * np.cos(ans[k]) * ders[k]) * sum1 + \
-                             derSum2 * (self.l * np.cos(ans[k])) + (-self.l * np.sin(ans[k]) * ders[k]) * sum2  # as a first part in first line
+                fig_skobka = derSum1 * (-self.l * np.cos(ans[k])) + (self.l * np.sin(ans[k]) * ders[k]) * sum1 + \
+                             derSum2 * (self.l * np.sin(ans[k])) + (self.l * np.cos(ans[k]) * ders[k]) * sum2  # as a first part in first line
 
                 fig_skobka = fig_skobka * sqrt
 
-                next_part = (sum1[self.n] * (-self.l * np.sin(ans[k])) + sum2[self.n] * (self.l * np.cos(ans[k])))
+                next_part = (sum1[self.n] * (-self.l * np.cos(ans[k])) + sum2[self.n] * (self.l * np.sin(ans[k])))
 
                 next_part = ((sum1[self.n] * derSum1 + sum2[self.n] * derSum2) / sqrt) * next_part
 
@@ -174,13 +175,13 @@ class NStickPendulum:
         assert j != 0
 
         if k < j - 1:
-            first_part = ((-1)*self.l * np.cos(ans[k]) * ders[k]) * sum1 + ((-1)*self.l * np.sin(ans[k]) * ders[k]) * sum2
+            first_part = (self.l * np.sin(ans[k]) * ders[k]) * sum1 + (self.l * np.cos(ans[k]) * ders[k]) * sum2
             second_part = ((self.l / 2) * ders[j] * np.cos(ans[j] - ans[j - 1]) * first_part) / sqrt
 
             return first_part + second_part
 
         if k == j - 1:
-            first_part = ((-1)*self.l * np.cos(ans[k]) * ders[k]) * sum1 + ((-1)*self.l * np.sin(ans[k]) * ders[k]) * sum2
+            first_part = (self.l * np.sin(ans[k]) * ders[k]) * sum1 + (self.l * np.cos(ans[k]) * ders[k]) * sum2
             second_part = ((self.l / 2) * ders[j] * np.cos(ans[j] - ans[j - 1]) * first_part) / sqrt
             third_part = np.array([0] * self.n + [(self.l / 2) * ders[j] * sqrt * (np.sin(ans[j] - ans[j - 1]))])
             return first_part + second_part + third_part
@@ -220,7 +221,7 @@ class NStickPendulum:
         return a
 
     def get_k_matrix_line(self, state, k):
-        return self.count_d_dt_dT_dphik(state, k) - self.count_dT_dphik(state, k) + self.count_dP_dphik(state, k)
+        return self.count_d_dt_dT_dphik(state, k) - self.count_dT_dphik(state, k) #+ self.count_dP_dphik(state, k)
 
     def psi(self, state):
         a = []
