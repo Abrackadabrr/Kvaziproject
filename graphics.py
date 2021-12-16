@@ -1,7 +1,7 @@
 import pygame
 import numpy as np
 
-FPS = 150
+FPS = 60
 
 YELLOW = (255, 200, 0)
 BLACK = (0, 0, 0)
@@ -13,6 +13,7 @@ FIELD_WIDTH = 100
 FIELD_HEIGHT = 35
 
 col_x = 1000
+
 way = pygame.Surface((1200, 800), pygame.SRCALPHA, 32)
 sc = pygame.display.set_mode((1200, 800))
 way = way.convert_alpha()
@@ -53,26 +54,30 @@ class Menu(Window):
 
         self.text1 = Text("NPendulumN", YELLOW, (430, 12), 80, self.screen)
         self.text2 = Text("N: ", WHITE, (col_x - 50, 100), 50, self.screen)
-        self.text3 = Text("l: ", WHITE, (col_x - 50, 150), 50, self.screen)
-        self.texts = [self.text1, self.text2, self.text3]
+        self.text3 = Text("length: ", WHITE, (col_x - 135, 150), 50, self.screen)
+        self.text4 = Text("angles: ", WHITE, (col_x - 140, 200), 50, self.screen)
+        self.texts = [self.text1, self.text2, self.text3, self.text4]
 
         self.field_N = InsertField(5, col_x, 100, FIELD_WIDTH, FIELD_HEIGHT, self.screen)
         self.field_l = InsertField(60, col_x, 150, FIELD_WIDTH, FIELD_HEIGHT, self.screen)
-        self.field_angle1 = InsertField(30, col_x, 200, FIELD_WIDTH, FIELD_HEIGHT, self.screen)
-        self.field_angle2 = InsertField(0, col_x, 250, FIELD_WIDTH, FIELD_HEIGHT, self.screen)
-        self.field_angle3 = InsertField(30, col_x, 300, FIELD_WIDTH, FIELD_HEIGHT, self.screen)
-        self.field_angle4 = InsertField(0, col_x, 350, FIELD_WIDTH, FIELD_HEIGHT, self.screen)
-        self.field_angle5 = InsertField(30, col_x, 400, FIELD_WIDTH, FIELD_HEIGHT, self.screen)
-        self.field_angle6 = InsertField(0, col_x, 450, FIELD_WIDTH, FIELD_HEIGHT, self.screen)
-        self.field_angle7 = InsertField(30, col_x, 500, FIELD_WIDTH, FIELD_HEIGHT, self.screen)
-        self.field_angle8 = InsertField(0, col_x, 550, FIELD_WIDTH, FIELD_HEIGHT, self.screen)
-        self.field_angle9 = InsertField(30, col_x, 600, FIELD_WIDTH, FIELD_HEIGHT, self.screen)
-        self.field_angle10 = InsertField(30, col_x, 650, FIELD_WIDTH, FIELD_HEIGHT, self.screen)
+        self.field_angle1 = InsertField(0, col_x, 200, FIELD_WIDTH, FIELD_HEIGHT, self.screen)
+        self.field_angle2 = InsertField(30, col_x, 250, FIELD_WIDTH, FIELD_HEIGHT, self.screen)
+        self.field_angle3 = InsertField(60, col_x, 300, FIELD_WIDTH, FIELD_HEIGHT, self.screen)
+        self.field_angle4 = InsertField(90, col_x, 350, FIELD_WIDTH, FIELD_HEIGHT, self.screen)
+        self.field_angle5 = InsertField(120, col_x, 400, FIELD_WIDTH, FIELD_HEIGHT, self.screen)
+        self.field_angle6 = InsertField(150, col_x, 450, FIELD_WIDTH, FIELD_HEIGHT, self.screen)
+        self.field_angle7 = InsertField(180, col_x, 500, FIELD_WIDTH, FIELD_HEIGHT, self.screen)
+        self.field_angle8 = InsertField(210, col_x, 550, FIELD_WIDTH, FIELD_HEIGHT, self.screen)
+        self.field_angle9 = InsertField(240, col_x, 600, FIELD_WIDTH, FIELD_HEIGHT, self.screen)
+        self.field_angle10 = InsertField(270, col_x, 650, FIELD_WIDTH, FIELD_HEIGHT, self.screen)
         self.insert_fields = [self.field_N, self.field_l, self.field_angle1, self.field_angle2, self.field_angle3,
                               self.field_angle4, self.field_angle5, self.field_angle6,
                               self.field_angle7, self.field_angle8, self.field_angle9,
                               self.field_angle10]
+
         self.angles = [np.pi / 180 * button.get_value() for button in self.insert_fields[2:]]
+
+        self.start = False
 
     def draw_objects(self):
         """Draws all objects in the window"""
@@ -117,6 +122,7 @@ class Menu(Window):
                             f.deactivate()
 
                     if self.start_button.check_mouse():
+                        self.start = True
                         finished = True
 
                 if event.type == pygame.KEYDOWN:
@@ -351,7 +357,7 @@ class Animation(Window):
         self.screen = screen
         self.counter = 0
 
-    def run(self, angles):
+    def run(self, angles, length):
         finished = False
         clock = pygame.time.Clock()
         while not finished:
@@ -361,26 +367,26 @@ class Animation(Window):
                 if event.type == pygame.QUIT:
                     finished = True
 
-            self.draw_objects(angles[self.counter])
+            self.draw_objects(angles[self.counter], length)
             pygame.display.update()
             if self.counter > angles.shape[0] - 10:
                 finished = True
             self.counter += 1
             self.screen.fill(BLACK)
 
-    def draw_objects(self, angles):
-        pos_s = self.data_transform(angles)
+    def draw_objects(self, angles, length):
+        pos_s = self.data_transform(angles, length)
         for i in range(len(angles)):
-            pygame.draw.line(self.screen, YELLOW, pos_s[i], pos_s[i+1], 5)
-            pygame.draw.circle(self.screen, YELLOW, pos_s[i+1], 5)
+            pygame.draw.line(self.screen, YELLOW, pos_s[i], pos_s[i+1], 1)
+            pygame.draw.circle(self.screen, YELLOW, pos_s[i+1], 2)
 
-        pygame.draw.circle(self.screen, YELLOW, pos_s[0], 5)
+        pygame.draw.circle(self.screen, YELLOW, pos_s[0], 2)
         pygame.draw.circle(way, RED, pos_s[-1], 1)
         sc.blit(self.screen, (0, 0))
         sc.blit(way, (0, 0))
 
     @staticmethod
-    def data_transform(angles, length=50):
+    def data_transform(angles, length):
         data_cos = np.cos(angles.copy())
         data_sin = np.sin(angles.copy())
         y_s = np.cumsum(length * data_cos)
