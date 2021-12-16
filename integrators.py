@@ -37,7 +37,6 @@ def integrator_method(next_step, func, initial_state, initial_time, timestep, n_
         state = next_step(func, state, time, timestep)
         time += timestep
         result.append(state)
-
     return np.array(result)
 
 
