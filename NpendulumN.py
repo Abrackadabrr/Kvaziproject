@@ -26,25 +26,16 @@ class NStickPendulum:
         return result
 
     def sum1(self, state, stop):
-        if stop <= 0:
-            return np.zeros(self.n + 1)
-
         ans = state[0:self.n]
         ders = state[self.n:2 * self.n]
         return np.array([0] * self.n + [(ders[0:stop] * np.cos(ans[0:stop])).sum()])
 
     def sum2(self, state, stop):
-        if stop <= 0:
-            return np.zeros(self.n + 1)
-
         ans = state[0:self.n]
         ders = state[self.n:2 * self.n]
         return np.array([0] * self.n + [(ders[0:stop] * np.sin(ans[0:stop])).sum()])
 
     def derSum1(self, state, stop):
-        if stop <= 0:
-            return np.zeros(self.n + 1)
-
         ans = state[0:self.n]
         ders = state[self.n:2 * self.n]
 
@@ -55,9 +46,6 @@ class NStickPendulum:
         return first_part - second_part
 
     def derSum2(self, state, stop):
-        if stop <= 0:
-            return np.zeros(self.n + 1)
-
         ans = state[0:self.n]
         ders = state[self.n:2 * self.n]
 
@@ -116,7 +104,6 @@ class NStickPendulum:
 
         sum1 = self.sum1(state, j)
         sum2 = self.sum2(state, j)
-        A = self.A(state, j, k)
 
         ans_k = ans[k]
         ans_j = ans[j]
@@ -169,10 +156,18 @@ class NStickPendulum:
     def get_k_matrix_line(self, state, k):
         return self.count_d_dt_dT_dphik(state, k) - self.count_dT_dphik(state, k) + self.count_dP_dphik(state, k)
 
+    def get_k_matrix_line2(self, state, k):
+        a = np.zeros(self.n + 1, dtype=np.float64)
+        for j in range(self.n):
+            a += self.d_dt_dTj_dphik(state, j, k)
+            a -= self.dTj_dphik(state, j, k)
+            a += self.dPi_dphik(state, j, k)
+        return a
+
     def psi(self, state):
         a = []
         for k in range(self.n):
-            a_ = self.get_k_matrix_line(state, k)
+            a_ = self.get_k_matrix_line2(state, k)
             a.append(a_)
         a = np.array(a)
         b = -a[:, self.n]
