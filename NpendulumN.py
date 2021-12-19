@@ -195,3 +195,7 @@ class NStickPendulum:
             energy += self.count_poten_j(state, j)
             energy += self.count_kinen_j(state, j)
         return energy
+
+
+if __name__ == '__main__':
+    print('Make sure you do all right')

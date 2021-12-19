@@ -3,13 +3,13 @@ import numpy as np
 
 FPS = 60
 
-YELLOW = (255, 200, 0)
+YELLOW = (255, 180, 0)
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
 GREY = (100, 100, 100)
 RED = (255, 0, 0)
 
-FIELD_WIDTH = 100
+FIELD_WIDTH = 120
 FIELD_HEIGHT = 35
 
 col_x = 1000
@@ -56,7 +56,15 @@ class Menu(Window):
         self.text2 = Text("N: ", WHITE, (col_x - 50, 100), 50, self.screen)
         self.text3 = Text("length: ", WHITE, (col_x - 135, 150), 50, self.screen)
         self.text4 = Text("angles: ", WHITE, (col_x - 140, 200), 50, self.screen)
-        self.texts = [self.text1, self.text2, self.text3, self.text4]
+        ##############
+        self.text5 = Text("full time: ", WHITE, (60, 100), 50, self.screen)
+        self.text6 = Text("time step: ", WHITE, (40, 150), 50, self.screen)
+        self.text7 = Text("For analys: ", WHITE, (40, 300), 50, self.screen)
+        self.text8 = Text("fst angle: ", WHITE, (60, 350), 50, self.screen)
+        self.text9 = Text("snd angle: ", WHITE, (40, 400), 50, self.screen)
+        ##############
+        self.texts = [self.text1, self.text2, self.text3, self.text4, self.text5,
+                      self.text6, self.text7, self.text8, self.text9]
 
         self.field_N = InsertField(5, col_x, 100, FIELD_WIDTH, FIELD_HEIGHT, self.screen)
         self.field_l = InsertField(60, col_x, 150, FIELD_WIDTH, FIELD_HEIGHT, self.screen)
@@ -70,12 +78,20 @@ class Menu(Window):
         self.field_angle8 = InsertField(210, col_x, 550, FIELD_WIDTH, FIELD_HEIGHT, self.screen)
         self.field_angle9 = InsertField(240, col_x, 600, FIELD_WIDTH, FIELD_HEIGHT, self.screen)
         self.field_angle10 = InsertField(270, col_x, 650, FIELD_WIDTH, FIELD_HEIGHT, self.screen)
-        self.insert_fields = [self.field_N, self.field_l, self.field_angle1, self.field_angle2, self.field_angle3,
+        #########
+        self.field_full_time = InsertField(10, 220, 100, FIELD_WIDTH, FIELD_HEIGHT, self.screen)
+        self.field_time_step = InsertField(0.01, 220, 150, FIELD_WIDTH, FIELD_HEIGHT, self.screen)
+        self.field_first_angle = InsertField(1, 235, 350, FIELD_WIDTH, FIELD_HEIGHT, self.screen)
+        self.field_second_angle = InsertField(2, 235, 400, FIELD_WIDTH, FIELD_HEIGHT, self.screen)
+        #########
+        self.insert_fields = [self.field_N, self.field_l, self.field_time_step, self.field_full_time,
+                              self.field_first_angle, self.field_second_angle,
+                              self.field_angle1, self.field_angle2, self.field_angle3,
                               self.field_angle4, self.field_angle5, self.field_angle6,
                               self.field_angle7, self.field_angle8, self.field_angle9,
                               self.field_angle10]
 
-        self.angles = [np.pi / 180 * button.get_value() for button in self.insert_fields[2:]]
+        self.angles = [np.pi / 180 * button.get_value() for button in self.insert_fields[6:]]  # тут было 2 - поменял на 6
 
         self.start = False
 
@@ -84,10 +100,10 @@ class Menu(Window):
         for text in self.texts:
             text.draw()
 
-        for f in self.insert_fields[:(int(self.field_N.get_value()) + 2)]:
+        for f in self.insert_fields[:(int(self.field_N.get_value()) + 6)]:  # тут было 2 - поменял на 6
             f.draw()
 
-        self.angles = [np.pi / 180 * button.get_value() for button in self.insert_fields[2:]]
+        self.angles = [np.pi / 180 * button.get_value() for button in self.insert_fields[6:]]  # тут было 2 - поменял на 6
         pos_s = Animation.data_transform(self.angles, self.field_l.get_value())
         for i in range(min(int(self.field_N.get_value()), 10)):
             pygame.draw.line(self.screen, YELLOW, pos_s[i], pos_s[i + 1], 5)
@@ -110,6 +126,42 @@ class Menu(Window):
         clock = pygame.time.Clock()
         while not finished:
             clock.tick(FPS)
+
+            first_angle = self.field_first_angle.get_value()
+            second_angle = self.field_second_angle.get_value()
+            N = self.field_N.get_value()
+
+            all_right = True
+            if first_angle > N or first_angle < 1:
+                self.field_first_angle.set_text_color('red')
+            else:
+                self.field_first_angle.set_text_color('black')
+        
+            if second_angle > N or second_angle < 1:
+                self.field_second_angle.set_text_color('red')
+            else:
+                self.field_second_angle.set_text_color('black')
+            try:
+                int(second_angle)
+            except ...:
+                self.field_second_angle.set_text_color('red')
+            try:
+                int(first_angle)
+            except ...:
+                self.field_first_angle.set_text_color('red')
+
+            try:
+                if 0 < int(second_angle) <= N and 0 < int(first_angle) <= N:
+                    all_right = True
+                else:
+                    all_right = False
+            except ...:
+                all_right = False
+            if not all_right:
+                self.start_button.set_active(False)
+            else:
+                self.start_button.set_active(True)
+
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     finished = True
@@ -121,7 +173,7 @@ class Menu(Window):
                         else:
                             f.deactivate()
 
-                    if self.start_button.check_mouse():
+                    if self.start_button.check_mouse() and all_right:
                         self.start = True
                         finished = True
 
@@ -135,7 +187,7 @@ class Menu(Window):
                                 f.value += "|"
                                 f.text.set_text(f.value)
                         else:
-                            if len(f.value) < 5:
+                            if len(f.value) < 7:
                                 f.insert(event.unicode)
 
             self.draw_objects()
@@ -143,7 +195,9 @@ class Menu(Window):
             self.screen.fill(BLACK)
 
         n = int(self.field_N.get_value())
-        return n, self.field_l.get_value(), np.array(self.angles[:n])
+        return n, self.field_l.get_value(), np.array(self.angles[:n]), \
+                  self.field_full_time.get_value(), self.field_time_step.get_value(), \
+                  int(self.field_first_angle.get_value()), int(self.field_second_angle.get_value())
 
 
 class Text:
@@ -170,6 +224,12 @@ class Text:
         self.screen = screen
         self.background = background
         self.is_active = True
+
+    def set_current_color(self, color):
+        self.current_color = color
+
+    def set_back_color(self, color):
+        self.background = color
 
     def draw(self):
         """
@@ -292,13 +352,16 @@ class InsertField:
         except ValueError:
             return 0
 
+    def set_text_color(self, color):
+        self.text.set_current_color(color)
+
 
 class Button:
     """
     class for buttons
     """
 
-    def __init__(self, x, y, w, h, text, screen, color=YELLOW):
+    def __init__(self, x, y, w, h, text, screen, color=YELLOW, text_size=0):
         """
         init function
         :param x: x position
@@ -309,6 +372,10 @@ class Button:
         :param screen: surface
         :param color: color
         """
+        if not text_size:
+            self.size = h
+        else:
+            self.size = text_size
         self.x = x
         self.y = y
         self.screen = screen
@@ -318,7 +385,16 @@ class Button:
         self.h = h
         self.is_active = False
         self.text_class = Text(self.text, BLACK, (self.x + (self.w - len(self.text) * 22) / 2, self.y + self.h * 0.2),
-                               self.h, self.screen, self.color)
+                               self.size, self.screen, self.color)
+
+    def set_active(self, boolean):
+        self.is_active = boolean
+        if not self.is_active:
+            self.color = GREY
+            self.text_class.set_back_color(GREY)
+        else:
+            self.color = YELLOW
+            self.text_class.set_back_color(YELLOW)
 
     def draw(self):
         """
@@ -333,16 +409,16 @@ class Button:
         check mouse position
         :return:
         """
+        if not self.is_active:
+            return False
         mouse_pos = pygame.mouse.get_pos()
         if self.x < mouse_pos[0] < self.x + self.w and self.y < mouse_pos[1] < self.y + self.h:
-            self.is_active = True
-            self.color = (255, 235, 0)
+            self.color = (255, 255, 0)
             self.text_class = Text(self.text, BLACK,
                                    (self.x + (self.w - len(self.text) * 22) / 2, self.y + self.h * 0.2),
                                    self.h, self.screen, self.color)
             return True
         else:
-            self.is_active = False
             self.color = YELLOW
             self.text_class = Text(self.text, BLACK,
                                    (self.x + (self.w - len(self.text) * 22) / 2, self.y + self.h * 0.2),
@@ -356,8 +432,45 @@ class Animation(Window):
         self.objects = []
         self.screen = screen
         self.counter = 0
+        self.start_button = Button(400, 700, 200, 70, "Start", self.screen)
+        self.skip_button = Button(630, 700, 200, 70, "Skip ", self.screen)
+        self.return_button = Button(500, 700, 200, 70, "To menu", self.screen)
+        self.start_button.set_active(True)
+        self.skip_button.set_active(True)
 
-    def run(self, angles, length):
+    def pre_run(self, angles, length):
+        clock = pygame.time.Clock()
+        finished = False
+        while not finished:
+
+            clock.tick(FPS)
+            self.screen.fill(BLACK)
+
+            self.start_button.draw()
+            self.skip_button.draw()
+            self.draw_objects(angles[0], length)
+
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    return False
+
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    if self.start_button.check_mouse():
+                        return True
+                    if self.skip_button.check_mouse():
+                        pygame.quit()
+                        return False
+
+            pygame.display.update()
+
+    def run(self, angles, length, time_step):
+        if not self.pre_run(angles, length):
+            return False
+        calc_fps = int(1 / time_step)
+        counter_increment = calc_fps/FPS
+        if counter_increment <= 0:
+            counter_increment = 1
+
         finished = False
         clock = pygame.time.Clock()
         while not finished:
@@ -367,20 +480,21 @@ class Animation(Window):
                 if event.type == pygame.QUIT:
                     finished = True
 
-            self.draw_objects(angles[self.counter], length)
+            self.draw_objects(angles[int(np.floor(self.counter))], length)
             pygame.display.update()
-            if self.counter > angles.shape[0] - 10:
+            if self.counter > angles.shape[0] - 20:
                 finished = True
-            self.counter += 1
+            self.counter += counter_increment
             self.screen.fill(BLACK)
+        return True
 
     def draw_objects(self, angles, length):
         pos_s = self.data_transform(angles, length)
         for i in range(len(angles)):
-            pygame.draw.line(self.screen, YELLOW, pos_s[i], pos_s[i+1], 1)
-            pygame.draw.circle(self.screen, YELLOW, pos_s[i+1], 2)
+            pygame.draw.line(self.screen, YELLOW, pos_s[i], pos_s[i + 1], 5)
+            pygame.draw.circle(self.screen, YELLOW, pos_s[i + 1], 5)
 
-        pygame.draw.circle(self.screen, YELLOW, pos_s[0], 2)
+        pygame.draw.circle(self.screen, YELLOW, pos_s[0], 5)
         pygame.draw.circle(way, RED, pos_s[-1], 1)
         sc.blit(self.screen, (0, 0))
         sc.blit(way, (0, 0))
