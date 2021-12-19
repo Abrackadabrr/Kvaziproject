@@ -56,17 +56,23 @@ class Menu(Window):
         self.text2 = Text("N: ", WHITE, (col_x - 50, 100), 50, self.screen)
         self.text3 = Text("length: ", WHITE, (col_x - 135, 150), 50, self.screen)
         self.text4 = Text("angles: ", WHITE, (col_x - 140, 200), 50, self.screen)
-        ##############
+
         self.text5 = Text("full time: ", WHITE, (60, 100), 50, self.screen)
         self.text6 = Text("time step: ", WHITE, (40, 150), 50, self.screen)
         self.text7 = Text("For analys: ", WHITE, (40, 300), 50, self.screen)
         self.text8 = Text("fst angle: ", WHITE, (60, 350), 50, self.screen)
         self.text9 = Text("snd angle: ", WHITE, (40, 400), 50, self.screen)
-        ##############
-        self.texts = [self.text1, self.text2, self.text3, self.text4, self.text5,
-                      self.text6, self.text7, self.text8, self.text9]
+        self.text10 = Text(f"Pendulum", WHITE, (40, 500), 50, self.screen)
+        self.text11 = Text(f"parameter: ", WHITE, (40, 550), 50, self.screen)
+        self.text12 = Text(f"Windage: ", WHITE, (40, 650), 50, self.screen)
+        self.text13 = Text(f"Save: ", WHITE, (col_x - 110, 500), 50, self.screen)
+        self.text14 = Text(f"Filename: ", WHITE, (col_x - 110, 550), 50, self.screen)
 
-        self.field_N = InsertField(5, col_x, 100, FIELD_WIDTH, FIELD_HEIGHT, self.screen)
+        self.texts = [self.text1, self.text2, self.text3, self.text4, self.text5,
+                      self.text6, self.text7, self.text8, self.text9, self.text10,
+                      self.text11, self.text12, self.text13, self.text14]
+
+        self.field_N = InsertField(1, col_x, 100, FIELD_WIDTH, FIELD_HEIGHT, self.screen)
         self.field_l = InsertField(60, col_x, 150, FIELD_WIDTH, FIELD_HEIGHT, self.screen)
         self.field_angle1 = InsertField(0, col_x, 200, FIELD_WIDTH, FIELD_HEIGHT, self.screen)
         self.field_angle2 = InsertField(30, col_x, 250, FIELD_WIDTH, FIELD_HEIGHT, self.screen)
@@ -78,20 +84,27 @@ class Menu(Window):
         self.field_angle8 = InsertField(210, col_x, 550, FIELD_WIDTH, FIELD_HEIGHT, self.screen)
         self.field_angle9 = InsertField(240, col_x, 600, FIELD_WIDTH, FIELD_HEIGHT, self.screen)
         self.field_angle10 = InsertField(270, col_x, 650, FIELD_WIDTH, FIELD_HEIGHT, self.screen)
-        #########
+
         self.field_full_time = InsertField(10, 220, 100, FIELD_WIDTH, FIELD_HEIGHT, self.screen)
         self.field_time_step = InsertField(0.01, 220, 150, FIELD_WIDTH, FIELD_HEIGHT, self.screen)
         self.field_first_angle = InsertField(1, 235, 350, FIELD_WIDTH, FIELD_HEIGHT, self.screen)
-        self.field_second_angle = InsertField(2, 235, 400, FIELD_WIDTH, FIELD_HEIGHT, self.screen)
-        #########
+        self.field_second_angle = InsertField(1, 235, 400, FIELD_WIDTH, FIELD_HEIGHT, self.screen)
+        self.field_pend_param = InsertField(10, 235, 550, FIELD_WIDTH, FIELD_HEIGHT, self.screen)
+        self.field_windage = InsertField(0.1, 235, 650, FIELD_WIDTH, FIELD_HEIGHT, self.screen)
+
+        self.field_filename = InsertField(0.1, col_x, 600, FIELD_WIDTH, FIELD_HEIGHT, self.screen)
+
+        self.click_save = ClickField(col_x, 500, self.screen)
+
         self.insert_fields = [self.field_N, self.field_l, self.field_time_step, self.field_full_time,
-                              self.field_first_angle, self.field_second_angle,
+                              self.field_first_angle, self.field_second_angle, self.field_pend_param,
+                              self.field_windage, self.field_filename,
                               self.field_angle1, self.field_angle2, self.field_angle3,
                               self.field_angle4, self.field_angle5, self.field_angle6,
                               self.field_angle7, self.field_angle8, self.field_angle9,
                               self.field_angle10]
 
-        self.angles = [np.pi / 180 * button.get_value() for button in self.insert_fields[6:]]  # тут было 2 - поменял на 6
+        self.angles = [np.pi / 180 * button.get_value() for button in self.insert_fields[9:]]  # тут было 2 - поменял на 6
 
         self.start = False
 
@@ -100,10 +113,11 @@ class Menu(Window):
         for text in self.texts:
             text.draw()
 
-        for f in self.insert_fields[:(int(self.field_N.get_value()) + 6)]:  # тут было 2 - поменял на 6
+        for f in self.insert_fields[:(int(self.field_N.get_value()) + 9)]:  # тут было 2 - поменял на 6
             f.draw()
 
-        self.angles = [np.pi / 180 * button.get_value() for button in self.insert_fields[6:]]  # тут было 2 - поменял на 6
+        self.angles = [np.pi / 180 * button.get_value() for button in self.insert_fields[9:]]  # тут было 2 - поменял на 6
+        self.click_save.draw()
         pos_s = Animation.data_transform(self.angles, self.field_l.get_value())
         for i in range(min(int(self.field_N.get_value()), 10)):
             pygame.draw.line(self.screen, YELLOW, pos_s[i], pos_s[i + 1], 5)
@@ -113,15 +127,6 @@ class Menu(Window):
         sc.blit(self.screen, (0, 0))
 
     def run(self):
-        """
-        Returns parameters as an np.array([x, y, z, vx, vy, vz, time, step,
-         x-axis, y-axis, air_force, sun_force, integrator, is_finished)
-         axis: 0 -- x, 1 -- y, 2 -- z, 3 -- vx, 4 -- vy, 5 -- vz, 6 -- time
-         forces: bool variables
-         integrator: 0 -- Euler, 1 -- RK4, 2 -- Dormand-Prince
-         is_finished: True if stop, False if go next
-        :return:
-        """
         finished = False
         clock = pygame.time.Clock()
         while not finished:
@@ -177,6 +182,8 @@ class Menu(Window):
                         self.start = True
                         finished = True
 
+                    self.click_save.check_mouse()
+
                 if event.type == pygame.KEYDOWN:
                     for f in self.insert_fields:
                         if event.key == 13:
@@ -195,9 +202,11 @@ class Menu(Window):
             self.screen.fill(BLACK)
 
         n = int(self.field_N.get_value())
-        return n, self.field_l.get_value(), np.array(self.angles[:n]), \
+        return n, self.field_pend_param.get_value(), self.field_windage.get_value(),\
+                  self.field_l.get_value(), np.array(self.angles[:n]), \
                   self.field_full_time.get_value(), self.field_time_step.get_value(), \
-                  int(self.field_first_angle.get_value()), int(self.field_second_angle.get_value())
+                  int(self.field_first_angle.get_value()), int(self.field_second_angle.get_value()), \
+                  self.click_save.get_value(), self.field_filename.get_value()
 
 
 class Text:
@@ -354,6 +363,37 @@ class InsertField:
 
     def set_text_color(self, color):
         self.text.set_current_color(color)
+
+
+class ClickField:
+    def __init__(self, x, y, screen):
+        """
+        init function
+        :param x: x position
+        :param y: y position
+        :param screen: surface
+        """
+        self.r = 14
+        self.x = x + self.r
+        self.y = y + 1.2 * self.r
+        self.screen = screen
+        self.is_active = False
+
+    def draw(self):
+        pygame.draw.circle(self.screen, WHITE, (self.x, self.y), self.r)
+        if self.is_active:
+            pygame.draw.circle(self.screen, BLACK, (self.x, self.y), self.r / 2)
+
+    def change(self):
+        self.is_active = not self.is_active
+
+    def check_mouse(self):
+        mouse_pos = pygame.mouse.get_pos()
+        if np.sqrt((mouse_pos[0] - self.x) ** 2 + (mouse_pos[1] - self.y) ** 2) < self.r:
+            self.change()
+
+    def get_value(self):
+        return self.is_active
 
 
 class Button:

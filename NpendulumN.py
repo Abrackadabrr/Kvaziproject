@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 
 
 class NStickPendulum:
-    def __init__(self, n, omega):
+    def __init__(self, n, omega, kappa):
         """
         Model of n-stick-pendulum
         :param n: number of sticks
@@ -13,6 +13,11 @@ class NStickPendulum:
         """
         self.omega = omega
         self.n = int(n)
+        self.kappa = kappa
+        if kappa == 0:
+            self.get_k_matrix_line = self.get_k_matrix_line_without_windage
+        else:
+            self.get_k_matrix_line = self.get_k_matrix_line_with_windage
 
     def func(self, state, time):
         psi = self.psi(state)
@@ -135,28 +140,16 @@ class NStickPendulum:
         if k > j:
             return np.zeros(self.n + 1)
 
-    def count_d_dt_dT_dphik(self, state, k):
+    def get_k_matrix_line_with_windage(self, state, k):
         a = np.zeros(self.n + 1, dtype=np.float64)
         for j in range(self.n):
             a += self.d_dt_dTj_dphik(state, j, k)
-        return a
-
-    def count_dP_dphik(self, state, k):
-        a = np.array([0] * (self.n + 1), dtype=np.float64)
-        for j in range(self.n):
+            a -= self.dTj_dphik(state, j, k)
             a += self.dPi_dphik(state, j, k)
+        a += self.k_generalized_force(state, k)
         return a
 
-    def count_dT_dphik(self, state, k):
-        a = np.array([0] * (self.n + 1), dtype=np.float64)
-        for j in range(self.n):
-            a += self.dTj_dphik(state, j, k)
-        return a
-
-    def get_k_matrix_line(self, state, k):
-        return self.count_d_dt_dT_dphik(state, k) - self.count_dT_dphik(state, k) + self.count_dP_dphik(state, k)
-
-    def get_k_matrix_line2(self, state, k):
+    def get_k_matrix_line_without_windage(self, state, k):
         a = np.zeros(self.n + 1, dtype=np.float64)
         for j in range(self.n):
             a += self.d_dt_dTj_dphik(state, j, k)
@@ -164,10 +157,13 @@ class NStickPendulum:
             a += self.dPi_dphik(state, j, k)
         return a
 
+    def k_generalized_force(self, state, k):
+        return np.concatenate((np.zeros(self.n), [self.kappa * state[self.n + k] * ((self.n - 1) - k + 2/3)]))
+
     def psi(self, state):
         a = []
         for k in range(self.n):
-            a_ = self.get_k_matrix_line2(state, k)
+            a_ = self.get_k_matrix_line(state, k)
             a.append(a_)
         a = np.array(a)
         b = -a[:, self.n]
@@ -185,9 +181,9 @@ class NStickPendulum:
 
     def count_poten_j(self, state, stop):
         ans = state[0:self.n]
-        s1 = np.cos(ans[0:stop]).sum()
-        s2 = cos(ans[stop])/2
-        return (-1)*self.omega*(s1+s2)
+        s1 = (1 - np.cos(ans[0:stop])).sum()
+        s2 = (1 - cos(ans[stop]))/2
+        return self.omega*(s1+s2)
 
     def count_energy(self, state):
         energy = 0

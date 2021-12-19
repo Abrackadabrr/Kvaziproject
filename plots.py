@@ -28,6 +28,34 @@ def plot_energy(energy, full_time, time_step):
     plt.show()
 
 
+def plot_energy_log(energy, full_time, time_step):
+    energy = np.array(energy)
+    time = np.linspace(0, full_time, energy.size)
+    log = np.log(energy)
+    koef = np.polyfit(time, log, 1)
+    line_log = np.polyval(koef, time)
+    line_energy = energy[0]*np.exp(time * koef[0])
+
+    fig, ax = plt.subplots(ncols=2)
+    fig.suptitle(f"Анализ энергии системы, шаг = {time_step}")
+    ax[0].plot(time, energy)
+    ax[0].plot(time, line_energy)
+    ax[0].grid()
+    ax[0].set_title(r"Полная энергия системы, отнесенная к $ml^2$")
+    ax[0].set_xlabel("Время")
+    ax[0].set_ylabel("Полная энергия системы")
+
+    ax[1].set_title("Логарифмический масштаб")
+    ax[1].plot(time, log, color='green', label='логарифм энергии')
+    ax[1].plot(time, line_log, color='red', label=f'k = {np.round(koef[0], 6)}' + r'$\approx -\frac{2}{n}\kappa$')
+    ax[1].grid()
+    ax[1].set_xlabel("Время")
+    ax[1].set_ylabel("Относительная ошибка")
+    ax[1].legend()
+
+    plt.show()
+
+
 def save(name, res):
     np.save(name, res)
 
